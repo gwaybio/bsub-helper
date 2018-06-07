@@ -1,4 +1,5 @@
 from setuptools import setup
+from setuptools import findpackages
 
 setup(name='bsub-helper',
       version='0.1',
@@ -7,5 +8,5 @@ setup(name='bsub-helper',
       author='Gregory Way',
       author_email='gregory.way@gmail.com',
       license='MIT',
-      packages=['bsub-helper'],
-      zip_safe=False)
+      packages=find_packages(),
+      python_requires='>=3.4')
