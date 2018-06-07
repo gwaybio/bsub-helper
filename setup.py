@@ -1,5 +1,5 @@
 from setuptools import setup
-from setuptools import findpackages
+from setuptools import find_packages
 
 setup(name='bsub-helper',
       version='0.1',
