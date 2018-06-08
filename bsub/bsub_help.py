@@ -17,14 +17,16 @@ import subprocess
 
 
 class bsubHelp():
-    def __init__(self, command, queue, num_cpus=1, num_gpus=1, num_ram=8,
-                 num_gpus_shared=0, walltime='0:10', error_file='std_err.txt',
-                 output_file='std_out.txt', local=False, shell=True):
+    def __init__(self, command, queue, job_name='default', num_cpus=1,
+                 num_gpus=1, num_ram=8, num_gpus_shared=0, walltime='0:10',
+                 error_file='std_err.txt', output_file='std_out.txt',
+                 depend_job='None', local=False, shell=True):
         try:
             self.command = command.split(' ')
         except:
             self.command = command
         self.queue = queue
+        self.job_name = job_name
         self.num_cpus = num_cpus
         self.num_gpus = num_gpus
         self.num_ram = num_ram
@@ -32,12 +34,14 @@ class bsubHelp():
         self.walltime = walltime
         self.error_file = error_file
         self.output_file = output_file
+        self.depend_job = depend_job
         self.local = local
         self.shell = shell
 
     def make_command_list(self):
-        command_list = ['bsub', '-q', self.queue, '-eo', self.error_file,
-                        '-oo', self.output_file, '-c', self.walltime]
+        command_list = ['bsub', '-q', self.queue, '-J', self.job_name,
+                        '-eo', self.error_file, '-oo', self.output_file,
+                        '-c', self.walltime]
         if self.queue == 'gpu':
             command_list += ['-R',
                              '"select[ngpus>{}] rusage [ngpus_shared={}]"'
@@ -45,6 +49,8 @@ class bsubHelp():
         else:
             command_list += ['-n', self.num_cpus, '-R',
                              '"rusage[mem={}]"'.format(self.num_ram)]
+        if self.depend_job != 'None':
+            command_list += ['-w', '"done({})"'.format(self.depend_job)]
         command_list += self.command
         return command_list
 
@@ -53,9 +59,9 @@ class bsubHelp():
             return self.command
         else:
             command_string = (
-                'bsub -q {} -eo {} -oo {} -c {}'
-                .format(self.queue, self.error_file, self.output_file,
-                        self.walltime)
+                'bsub -q {} -J {}, -eo {} -oo {} -c {}'
+                .format(self.queue, self.job_name, self.error_file,
+                        self.output_file, self.walltime)
                 )
             if self.queue == 'gpu':
                 command_string = (
@@ -67,6 +73,10 @@ class bsubHelp():
                 command_string = (
                     '{} -n {} -R "rusage[mem={}]"'
                     .format(command_string, self.num_cpus, self.num_ram)
+                )
+            if self.depend_job != 'None':
+                command_string = (
+                    '{} -w "done({})"'.format(command_string, self.depend_job)
                 )
             return '{} {}'.format(command_string, ' '.join(self.command))
 
